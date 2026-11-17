@@ -53,6 +53,8 @@ jobs:
           path: .generated/proxmox-integration
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+        with:
+          toolchain: '1.92.0'
       - name: Build the pinned core and run actual CLI contract tests
         env:
           CMDMESH_BIN: ${{ github.workspace }}/.generated/core/target/debug/cmdmesh
