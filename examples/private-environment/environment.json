@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "providers": {},
+  "packages": {"proxmox": "../cmdmesh-proxmox"},
+  "targets": {
+    "lab": {
+      "inventory": "inventory.yml",
+      "limit": "lab_node",
+      "vars_file": "baseline.yml",
+      "lifecycle_owner": "terraform"
+    }
+  },
+  "execution": {
+    "allow_execution": false,
+    "allow_mutations": false,
+    "timeout_seconds": 300
+  }
+}

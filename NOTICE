@@ -1,0 +1,10 @@
+CmdMesh
+Copyright (c) 2026 Luis Lobo Borobia
+
+This project contains new code and reusable infrastructure patterns adapted from
+the author's existing automation. Private inventory, credentials, environment
+state and operational history are not part of this distribution.
+
+The project source is licensed under MIT; see LICENSE. External tools and
+dependencies retain their own licenses. They are declared in the package
+manifests and are not relicensed by this notice.

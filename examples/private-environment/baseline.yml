@@ -1,0 +1,6 @@
+---
+cmdmesh_allow_changes: false
+proxmox_baseline_host_packages:
+  - jq
+  - htop
+proxmox_baseline_host_absent_packages: []

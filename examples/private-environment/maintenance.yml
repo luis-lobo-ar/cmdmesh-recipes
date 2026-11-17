@@ -1,0 +1,6 @@
+---
+cmdmesh_allow_changes: false
+proxmox_maintenance_assessment_only: true
+proxmox_maintenance_enabled: false
+proxmox_maintenance_reboot: false
+proxmox_maintenance_blocked_reason: "Qualify independent console access and backups first"

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "proxmox-host-baseline",
+  "title": "Proxmox host tools",
+  "summary": "Install an explicitly selected package baseline on selected Proxmox hosts, not inside guests.",
+  "status": "ready",
+  "requirements": ["Proxmox VE Debian host with SSH and apt access", "Explicit host packages and reviewed removal list", "Reviewed inventory and backup/recovery access"],
+  "dependencies": ["proxmox"],
+  "steps": [{"id": "baseline", "driver": "ansible", "playbook": "playbook.yml"}],
+  "verification": ["Inspect the selected host package versions", "Confirm unrelated guests and services remain unchanged"],
+  "recovery": "README.md"
+}

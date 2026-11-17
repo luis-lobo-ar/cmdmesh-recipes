@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "proxmox-host-maintenance",
+  "title": "Proxmox host maintenance",
+  "summary": "Assess a selected host, or explicitly authorize package maintenance and reboot only after guests are stopped or migrated.",
+  "status": "ready",
+  "requirements": ["One explicitly selected maintenance host", "Independent console access and verified backup/restore procedure", "No running guests before package maintenance", "Explicit maintenance and reboot authorization in private variables", "Cluster quorum and workload placement reviewed outside this recipe"],
+  "dependencies": ["proxmox"],
+  "steps": [{"id": "maintenance", "driver": "ansible", "playbook": "playbook.yml"}],
+  "verification": ["Review assessment output before enabling maintenance", "Confirm expected kernel, essential services and failed units", "Validate storage, cluster state and guest workloads before restoring service"],
+  "recovery": "README.md"
+}

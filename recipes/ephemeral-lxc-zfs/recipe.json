@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "ephemeral-lxc-zfs",
+  "title": "Recreatable LXC with persistent ZFS data",
+  "summary": "Design draft pending Keaton's storage conventions and disposable-host backup/rebuild/restore evidence; not executable.",
+  "status": "draft",
+  "requirements": ["Keaton's reviewed dataset and bind-mount convention", "Explicit UID/GID mapping and lifecycle ownership", "Independent backup and successful isolated restore", "Disposable-host rebuild evidence"],
+  "dependencies": ["proxmox"],
+  "steps": [],
+  "verification": ["Recreate the guest without deleting persistent datasets", "Restore data after simulated loss of the original dataset", "Verify application consistency, permissions and startup ordering"],
+  "recovery": "README.md"
+}

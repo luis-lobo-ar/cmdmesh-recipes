@@ -1,0 +1,8 @@
+---
+- name: Install the selected Proxmox host package baseline
+  hosts: cmdmesh_targets
+  become: true
+  gather_facts: false
+  serial: 1
+  roles:
+    - cmdmesh.proxmox.proxmox_baseline

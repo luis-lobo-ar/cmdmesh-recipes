@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "proxmox-lxc-growth",
+  "title": "Proxmox LXC resource and rootfs growth",
+  "summary": "Reconcile explicit Ansible-owned LXC resources and grow root filesystems without shrinking them.",
+  "status": "ready",
+  "requirements": ["lifecycle-owner:ansible", "Exactly one lifecycle owner for guest memory, swap and rootfs size", "Explicit guest hostname lists and matching node/VMID inventory", "Verified backup and free storage capacity", "Application memory impact reviewed"],
+  "dependencies": ["proxmox"],
+  "steps": [{"id": "grow", "driver": "ansible", "playbook": "playbook.yml"}],
+  "verification": ["Compare pct config against requested memory, swap and rootfs sizes", "Verify filesystem capacity and workload health inside each guest", "Confirm Terraform does not reconcile the same fields"],
+  "recovery": "README.md"
+}

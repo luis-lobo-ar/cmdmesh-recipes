@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "proxmox-backup-schedule",
+  "title": "Proxmox guest backup schedule",
+  "summary": "Install guest backup wrappers and systemd schedules with explicit retention and storage choices.",
+  "status": "ready",
+  "requirements": ["Mounted backup storage and verified available capacity", "Explicit guest IDs, backup mode, retention and schedule", "Restore procedure covering external bind mounts separately", "Storage access and encryption policy reviewed"],
+  "dependencies": ["proxmox"],
+  "steps": [{"id": "schedule", "driver": "ansible", "playbook": "playbook.yml"}],
+  "verification": ["Inspect installed systemd timer schedules and service commands", "Run an approved backup separately and inspect its exit status and archive", "Restore a backup into an isolated guest and verify application data"],
+  "recovery": "README.md"
+}

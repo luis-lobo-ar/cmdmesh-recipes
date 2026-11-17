@@ -1,0 +1,67 @@
+name: Validate catalog
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  catalog:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - name: Read pinned core dependency
+        id: core
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          dependency = json.loads(Path('.github/core.json').read_text())
+          assert re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', dependency['repository'])
+          assert re.fullmatch(r'[a-f0-9]{40}', dependency['commit']), 'Publish with an exact reviewed core commit'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f"repository={dependency['repository']}\ncommit={dependency['commit']}\n")
+          PY
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          repository: ${{ steps.core.outputs.repository }}
+          ref: ${{ steps.core.outputs.commit }}
+          path: .generated/core
+          persist-credentials: false
+      - name: Validate manifests and contract rejection cases
+        run: |
+          python3 scripts/validate_catalog.py
+          python3 -m unittest discover -s tests -v
+      - name: Read pinned integration dependency
+        id: integration
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          dependency = json.loads(Path('.github/proxmox-integration.json').read_text())
+          assert re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', dependency['repository'])
+          assert re.fullmatch(r'[a-f0-9]{40}', dependency['commit']), 'Publish with an exact reviewed integration commit'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f"repository={dependency['repository']}\ncommit={dependency['commit']}\n")
+          PY
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          repository: ${{ steps.integration.outputs.repository }}
+          ref: ${{ steps.integration.outputs.commit }}
+          path: .generated/proxmox-integration
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
+      - name: Build the pinned core and run actual CLI contract tests
+        env:
+          CMDMESH_BIN: ${{ github.workspace }}/.generated/core/target/debug/cmdmesh
+          CMDMESH_PROXMOX_ROOT: ${{ github.workspace }}/.generated/proxmox-integration
+        run: |
+          cargo build --locked --manifest-path .generated/core/Cargo.toml
+          python3 -m unittest discover -s tests -v
+      - name: Resolve real collection roles without connecting to hosts
+        run: |
+          python3 -m venv .generated/ansible
+          .generated/ansible/bin/pip install ansible-core==2.20.4
+          python3 scripts/check_ansible_syntax.py --collection-root .generated/proxmox-integration --ansible .generated/ansible/bin/ansible-playbook

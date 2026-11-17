@@ -1,0 +1,11 @@
+---
+cmdmesh_allow_changes: false
+proxmox_vm_backup_schedule_enabled: false
+proxmox_vm_backup_storage: example-backups
+proxmox_vm_backup_mode: snapshot
+proxmox_vm_backup_jobs:
+  - name: example-app
+    vmid: 101
+    guest_type: lxc
+    keep_last: 3
+    on_calendar: "*-*-* 03:15:00"

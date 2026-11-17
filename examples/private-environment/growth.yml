@@ -1,0 +1,7 @@
+---
+cmdmesh_allow_changes: false
+lifecycle_owner: ansible
+proxmox_lxc_resources_guests:
+  - example_app
+proxmox_lxc_storage_guests:
+  - example_app

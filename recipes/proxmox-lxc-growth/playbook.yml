@@ -1,0 +1,9 @@
+---
+- name: Reconcile explicit Ansible-owned LXC resources and storage growth
+  hosts: cmdmesh_targets
+  become: true
+  gather_facts: false
+  serial: 1
+  roles:
+    - cmdmesh.proxmox.proxmox_lxc_resources
+    - cmdmesh.proxmox.proxmox_lxc_storage
