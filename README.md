@@ -25,7 +25,8 @@ See [validation limits](docs/VALIDATION.md) and the [future catalog](docs/ROADMA
 2. Copy `examples/private-environment` into a separate private repository.
    Replace the fictional inventory and review every variable.
 3. Install a compatible Ansible controller. The collection targets
-   `ansible-core >=2.16`; CI installs 2.20.4. Do not put passwords in public files.
+   `ansible-core >=2.19`, as declared by the integration collection; CI installs
+   2.20.4. Do not put passwords in public files.
 4. Review the recipe README, package implementation, backup and recovery plan.
 5. Validate syntax locally before connecting to a host.
 
