@@ -1,0 +1,80 @@
+{
+  "document_type": "cmdmesh.operation",
+  "schema_version": 1,
+  "operation_version": 1,
+  "id": "proxmox-backup-schedule-check",
+  "aliases": [
+    "check backup schedule",
+    "review backup timer configuration"
+  ],
+  "title": "Plan a guest backup schedule check",
+  "summary": "Prepare a check-mode plan for explicit backup jobs and timers; this neither runs a backup nor proves recoverability.",
+  "parameters": {
+    "target": {
+      "type": "target",
+      "required": true,
+      "description": "Explicit target name from the private CmdMesh environment"
+    }
+  },
+  "requirements": [
+    {
+      "capability": "ansible-recipe",
+      "protocol_version": 1,
+      "supported_tools": {
+        "ansible-core": [
+          "2.20.4"
+        ]
+      }
+    },
+    {
+      "capability": "proxmox",
+      "protocol_version": 1,
+      "supported_tools": {
+        "cmdmesh-proxmox": [
+          "0.1.0"
+        ]
+      }
+    }
+  ],
+  "entrypoint": {
+    "driver": "recipe-plan",
+    "manifest": "recipe.json",
+    "operation": "check"
+  },
+  "expected_results": [
+    "A static check-mode plan bound to this recipe, operation metadata and private inputs",
+    "No provider, Ansible, Terraform or infrastructure change runs during planning"
+  ],
+  "known_failures": [
+    {
+      "code": "missing-backup-coverage",
+      "summary": "A timer or metric does not prove every expected guest is protected",
+      "next_checks": [
+        "Compare expected guests, mounts and jobs with actual artifacts and last results"
+      ],
+      "recovery": [
+        "Keep missing coverage explicit and qualify an isolated restore before claiming recovery"
+      ]
+    },
+    {
+      "code": "retention-or-schedule-risk",
+      "summary": "A later apply can enable overdue jobs or prune retained archives",
+      "next_checks": [
+        "Inspect named jobs, persistent timers, destination space and retention policy"
+      ],
+      "recovery": [
+        "Disable only the named schedule through its documented procedure; deleted archives are not restored by rollback"
+      ]
+    }
+  ],
+  "provenance": {
+    "references": [
+      "README.md"
+    ],
+    "qualification": "Local manifest, plan and role syntax contracts",
+    "limitations": [
+      "No immediate backup or independent copy is created by planning",
+      "Bind mounts and application consistency require explicit separate coverage"
+    ]
+  }
+}

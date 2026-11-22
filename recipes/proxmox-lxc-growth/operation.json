@@ -1,0 +1,90 @@
+{
+  "document_type": "cmdmesh.operation",
+  "schema_version": 1,
+  "operation_version": 1,
+  "id": "proxmox-lxc-growth-check",
+  "aliases": [
+    "plan container growth",
+    "review lxc growth inputs"
+  ],
+  "title": "Plan explicitly owned LXC growth",
+  "summary": "Prepare a check-mode plan for Ansible-owned memory, swap and rootfs growth on explicitly selected guests.",
+  "parameters": {
+    "target": {
+      "type": "target",
+      "required": true,
+      "description": "Explicit target name from the private CmdMesh environment"
+    }
+  },
+  "requirements": [
+    {
+      "capability": "ansible-recipe",
+      "protocol_version": 1,
+      "supported_tools": {
+        "ansible-core": [
+          "2.20.4"
+        ]
+      }
+    },
+    {
+      "capability": "proxmox",
+      "protocol_version": 1,
+      "supported_tools": {
+        "cmdmesh-proxmox": [
+          "0.1.0"
+        ]
+      }
+    }
+  ],
+  "entrypoint": {
+    "driver": "recipe-plan",
+    "manifest": "recipe.json",
+    "operation": "check"
+  },
+  "expected_results": [
+    "A static check-mode plan bound to this recipe, operation metadata and private inputs",
+    "No provider, Ansible, Terraform or infrastructure change runs during planning"
+  ],
+  "known_failures": [
+    {
+      "code": "ownership-conflict",
+      "summary": "Another lifecycle controller owns the requested fields",
+      "next_checks": [
+        "Check private lifecycle ownership, node, kind, VMID and controller state"
+      ],
+      "recovery": [
+        "Change the owning controller inputs rather than forcing a competing apply"
+      ]
+    },
+    {
+      "code": "shrink-request",
+      "summary": "The requested rootfs size would shrink a filesystem",
+      "next_checks": [
+        "Compare current config and native units with the requested size"
+      ],
+      "recovery": [
+        "Do not shrink to roll back; restore to a separate verified volume or guest if required"
+      ]
+    },
+    {
+      "code": "capacity-unverified",
+      "summary": "Configured memory or a plan alone does not establish real capacity",
+      "next_checks": [
+        "Inspect active and pending config, host/storage headroom, guest filesystem and backup"
+      ],
+      "recovery": [
+        "Stop before applying if identity or capacity is unresolved; validate the actual post-change result"
+      ]
+    }
+  ],
+  "provenance": {
+    "references": [
+      "README.md"
+    ],
+    "qualification": "Local manifest, plan and role syntax contracts",
+    "limitations": [
+      "Planning does not inspect or certify current host/storage capacity",
+      "Rootfs growth is one-way here; bind mounts and application datasets are outside this operation"
+    ]
+  }
+}
