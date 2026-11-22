@@ -1,0 +1,80 @@
+{
+  "document_type": "cmdmesh.operation",
+  "schema_version": 1,
+  "operation_version": 1,
+  "id": "proxmox-host-baseline-check",
+  "aliases": [
+    "check host tools",
+    "review host package baseline"
+  ],
+  "title": "Plan a Proxmox host baseline check",
+  "summary": "Prepare a check-mode plan for the explicit host package list; guests and access policy are outside this recipe.",
+  "parameters": {
+    "target": {
+      "type": "target",
+      "required": true,
+      "description": "Explicit target name from the private CmdMesh environment"
+    }
+  },
+  "requirements": [
+    {
+      "capability": "ansible-recipe",
+      "protocol_version": 1,
+      "supported_tools": {
+        "ansible-core": [
+          "2.20.4"
+        ]
+      }
+    },
+    {
+      "capability": "proxmox",
+      "protocol_version": 1,
+      "supported_tools": {
+        "cmdmesh-proxmox": [
+          "0.1.0"
+        ]
+      }
+    }
+  ],
+  "entrypoint": {
+    "driver": "recipe-plan",
+    "manifest": "recipe.json",
+    "operation": "check"
+  },
+  "expected_results": [
+    "A static check-mode plan bound to this recipe, operation metadata and private inputs",
+    "No provider, Ansible, Terraform or infrastructure change runs during planning"
+  ],
+  "known_failures": [
+    {
+      "code": "unknown-target",
+      "summary": "The private target reference is missing or incorrect",
+      "next_checks": [
+        "Inspect the private target, inventory limit and variables"
+      ],
+      "recovery": [
+        "Correct the private reference and prepare a new plan"
+      ]
+    },
+    {
+      "code": "package-recovery",
+      "summary": "A later approved package change needs recovery",
+      "next_checks": [
+        "Inspect installed versions and the selected package/removal lists"
+      ],
+      "recovery": [
+        "Follow the recipe recovery procedure; changing desired selection does not uninstall or downgrade packages"
+      ]
+    }
+  ],
+  "provenance": {
+    "references": [
+      "README.md"
+    ],
+    "qualification": "Local manifest, plan and role syntax contracts",
+    "limitations": [
+      "Host-only package scope; not the legacy host-and-guest baseline",
+      "A static plan does not prove remote access, package availability or workload health"
+    ]
+  }
+}

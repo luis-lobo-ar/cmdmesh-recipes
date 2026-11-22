@@ -60,6 +60,34 @@ and growth recipes require additional private opt-ins described in their READMEs
 
 ## Use CmdMesh
 
+With core **0.2.0** or later, discover the four implemented check-planning
+operations by intent before looking up a playbook:
+
+```sh
+cmdmesh operation list --catalog . --query 'host tools'
+cmdmesh operation inspect 'check host tools' --catalog .
+cmdmesh --config /path/to/private/environment.json operation validate-inputs \
+  proxmox-host-baseline-check --catalog . --inputs /path/to/private/operation-inputs.json
+cmdmesh --config /path/to/private/environment.json operation plan \
+  proxmox-host-baseline-check --catalog . --inputs /path/to/private/operation-inputs.json \
+  --out /path/to/private/baseline-operation.plan.json
+```
+
+The private inputs file contains `{"target":"lab"}`, using your environment's
+actual target name. Each `operation.json` describes supported versions, the
+mandatory target reference, exact entrypoint, known failures, next checks and
+recovery. Discovery/validation/planning runs no Ansible or infrastructure command;
+declared prerequisites remain unevaluated. The resulting plan is the existing
+schema-1 recipe plan with unchanged execution policy. Metadata is colocated with
+the recipe so edits invalidate its digest. See the
+[operation contract](https://github.com/luis-lobo-ar/cmdmesh/blob/main/docs/operations.md).
+
+All four entries prepare **check** plans. Existing explicit `recipe plan --operation apply`
+remains the path for separately reviewed apply planning.
+The draft persistence procedure is not advertised as an implemented operation.
+Existing schema-1 recipe discovery/planning also works with older core releases;
+the new operation commands require 0.2.0. CI pins the exact tested core revision.
+
 The CLI adds catalog discovery and approval bound to exact input content. It does
 not make arbitrary Ansible code safe or replace operator review.
 

@@ -1,5 +1,11 @@
 # Recipe extraction roadmap
 
+The first P2 slice adds versioned operation metadata to the four implemented
+check-planning recipes. Core 0.2.0 exposes intent search, typed private target
+validation, known failure/recovery guidance and the same bound static plans.
+This is discovery and planning, not executable prerequisite/postcondition checks
+or end-to-end recovery qualification. Those remain later phases below.
+
 The [CmdMesh extraction plan](https://github.com/luis-lobo-ar/cmdmesh/blob/main/docs/roadmap.md)
 is the canonical product plan. Its goal is to convert actual operating knowledge
 and built-in script context into reusable components, beginning with Proxmox.

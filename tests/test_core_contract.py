@@ -12,6 +12,23 @@ BINARY = os.environ.get("CMDMESH_BIN")
 
 @unittest.skipUnless(BINARY, "set CMDMESH_BIN for actual core parser validation")
 class CoreContract(unittest.TestCase):
+    def test_operation_discovery_exposes_only_implemented_check_entrypoints(self):
+        result = subprocess.run([BINARY, "operation", "list", "--catalog", str(ROOT)],
+                                capture_output=True, text=True, timeout=10, check=True)
+        entries = json.loads(result.stdout)["items"]
+        expected = {"proxmox-host-baseline-check", "proxmox-backup-schedule-check",
+                    "proxmox-host-maintenance-check", "proxmox-lxc-growth-check"}
+        self.assertEqual({entry["id"] for entry in entries}, expected)
+        for entry in entries:
+            inspected = subprocess.run([BINARY, "operation", "inspect", entry["id"],
+                                        "--catalog", str(ROOT)],
+                                       capture_output=True, text=True, timeout=10, check=True)
+            operation = json.loads(inspected.stdout)
+            self.assertEqual(operation["entrypoint"]["operation"], "check")
+            self.assertEqual(operation["parameters"]["target"]["type"], "target")
+            self.assertTrue(operation["known_failures"])
+            self.assertTrue(operation["provenance"]["limitations"])
+
     def test_core_lists_the_entire_catalog(self):
         result = subprocess.run([BINARY, "recipe", "list", "--catalog", str(ROOT)],
                                 capture_output=True, text=True, timeout=10, check=True)
@@ -62,6 +79,15 @@ class CoreContract(unittest.TestCase):
                     prepared = json.loads(plan.read_text())
                     self.assertEqual(prepared["operation"], "check")
                     self.assertIn("--check", prepared["commands"][0]["argv"])
+                    operation_plan = private / f"{manifest['id']}.operation.plan.json"
+                    inputs = private / "operation-inputs.json"
+                    inputs.write_text(json.dumps({"target": "lab"}))
+                    via_operation = subprocess.run([
+                        BINARY, "--config", str(config), "operation", "plan", manifest["id"] + "-check",
+                        "--catalog", str(ROOT), "--inputs", str(inputs), "--out", str(operation_plan)],
+                        capture_output=True, text=True, timeout=20)
+                    self.assertEqual(via_operation.returncode, 0, via_operation.stderr)
+                    self.assertEqual(json.loads(operation_plan.read_text())["digest"], prepared["digest"])
 
     def test_plan_rejects_changed_automatic_inventory_group_variables(self):
         """A single inventory file still has automatically loaded sibling inputs."""

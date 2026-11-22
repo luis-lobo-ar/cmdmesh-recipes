@@ -1,0 +1,80 @@
+{
+  "document_type": "cmdmesh.operation",
+  "schema_version": 1,
+  "operation_version": 1,
+  "id": "proxmox-host-maintenance-check",
+  "aliases": [
+    "assess host maintenance",
+    "review host upgrade prerequisites"
+  ],
+  "title": "Plan a Proxmox maintenance assessment",
+  "summary": "Prepare the existing check-mode maintenance assessment with explicit private recovery and availability policy.",
+  "parameters": {
+    "target": {
+      "type": "target",
+      "required": true,
+      "description": "Explicit target name from the private CmdMesh environment"
+    }
+  },
+  "requirements": [
+    {
+      "capability": "ansible-recipe",
+      "protocol_version": 1,
+      "supported_tools": {
+        "ansible-core": [
+          "2.20.4"
+        ]
+      }
+    },
+    {
+      "capability": "proxmox",
+      "protocol_version": 1,
+      "supported_tools": {
+        "cmdmesh-proxmox": [
+          "0.1.0"
+        ]
+      }
+    }
+  ],
+  "entrypoint": {
+    "driver": "recipe-plan",
+    "manifest": "recipe.json",
+    "operation": "check"
+  },
+  "expected_results": [
+    "A static check-mode plan bound to this recipe, operation metadata and private inputs",
+    "No provider, Ansible, Terraform or infrastructure change runs during planning"
+  ],
+  "known_failures": [
+    {
+      "code": "running-guests",
+      "summary": "The current recipe refuses package maintenance while guests run",
+      "next_checks": [
+        "Inspect current guests and the configured assessment/apply scope"
+      ],
+      "recovery": [
+        "Use a separately owned guest procedure; this recipe does not stop or migrate guests"
+      ]
+    },
+    {
+      "code": "recovery-not-qualified",
+      "summary": "Host upgrade or reboot prerequisites are not established",
+      "next_checks": [
+        "Verify console, backups, quorum, repositories and recovery ownership"
+      ],
+      "recovery": [
+        "Remain in assessment and follow the documented recovery procedure; do not retry reboots blindly"
+      ]
+    }
+  ],
+  "provenance": {
+    "references": [
+      "README.md"
+    ],
+    "qualification": "Local manifest, plan and role syntax contracts",
+    "limitations": [
+      "Assessment/check mode does not prove a later upgrade or reboot will succeed",
+      "The current stopped-guest apply rule belongs to this recipe; it is not a universal submission hold"
+    ]
+  }
+}
