@@ -16,7 +16,12 @@ environment repository. The recipes do not depend on Neo or its configuration.
 
 **Ready means the recipe contract and local checks pass. It does not mean your
 hardware, restore procedure or production environment has been qualified.**
-See [validation limits](docs/VALIDATION.md) and the [future catalog](docs/ROADMAP.md).
+See [validation limits](docs/VALIDATION.md) and the [recipe extraction roadmap](docs/ROADMAP.md).
+
+The [full CmdMesh extraction plan](https://github.com/luis-lobo-ar/cmdmesh/blob/main/docs/roadmap.md)
+describes how operating knowledge becomes reusable components, beginning with
+Proxmox. This catalog maps those phases to procedure work; planned capabilities
+are not current release features.
 
 ## Start with your own environment
 
