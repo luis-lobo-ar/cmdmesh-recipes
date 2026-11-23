@@ -1,14 +1,45 @@
 # Recreatable LXC with persistent ZFS data — draft
 
 This is a design checklist, **not an implemented recipe**. There is no executable
-playbook. Keaton's storage conventions and disposable-host recovery evidence are
-required before promoting it to ready.
+playbook. The reference layout below is selected for implementation. Feedback from
+Keaton can refine it later; disposable-host recovery evidence is required before
+promoting it to ready.
 
 The intended outcome is a replaceable guest root filesystem with application
 data and configuration in deliberately owned ZFS datasets/bind mounts. Rebuilding
 the container must not destroy those datasets or lose the application identity.
 
 ## Decisions and acceptance evidence needed
+
+The reference uses an unprivileged LXC and two sibling datasets outside its
+root filesystem. Dataset names and paths are examples, supplied through private
+configuration in a real installation:
+
+```text
+storage/apps/example/             retained application boundary
+  data                           transactional data and payloads
+  config                         application configuration and stable identity
+
+replaceable LXC root filesystem
+  /var/lib/example  <- bind mount of data
+  /etc/example     <- bind mount of config
+```
+
+The host retains ownership of these datasets when replacing a guest. Bind mounts
+are not covered by assuming that a normal LXC rootfs archive includes them.
+Keep an independently stored, application-consistent backup of both datasets
+from the same generation. Capture exact dataset GUIDs and the observed LXC UID/GID
+mapping; never assume host ownership follows the container's numeric IDs.
+
+A missing dataset or incorrect mount must prevent application startup. It must
+not create empty replacement data in an uncovered directory. Rebuild into a fresh
+guest while the old guest is stopped, with only one application writer. Qualify
+restore onto new storage with the original source unavailable, then check real
+application reads, writes, identity and permissions. Same-pool snapshots alone
+do not qualify as independent restore evidence.
+
+These choices are a reference convention, not a claim about Keaton's setup.
+The recipe remains draft with no executable steps until its checks pass.
 
 - Dataset layout, names, lifecycle owner and exact destroy-protection boundary.
 - Privileged/unprivileged LXC choice and explicit UID/GID/idmap ownership.
