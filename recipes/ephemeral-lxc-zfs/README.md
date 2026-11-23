@@ -41,6 +41,11 @@ do not qualify as independent restore evidence.
 These choices are a reference convention, not a claim about Keaton's setup.
 The recipe remains draft with no executable steps until its checks pass.
 
+The [reference ledger](../../examples/reference-ledger/README.md) supplies a
+locally tested SQLite application for later recovery trials. It verifies actual
+authenticated reads/writes and persisted identity instead of relying on file
+existence. Its application tests do not qualify ZFS mounts or restore automation.
+
 - Dataset layout, names, lifecycle owner and exact destroy-protection boundary.
 - Privileged/unprivileged LXC choice and explicit UID/GID/idmap ownership.
 - Mount propagation, startup ordering and behavior when storage is unavailable.
