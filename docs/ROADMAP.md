@@ -3,8 +3,11 @@
 The first P2 slice adds versioned operation metadata to the four implemented
 check-planning recipes. Core 0.2.0 exposes intent search, typed private target
 validation, known failure/recovery guidance and the same bound static plans.
-This is discovery and planning, not executable prerequisite/postcondition checks
-or end-to-end recovery qualification. Those remain later phases below.
+Those entries remain static discovery/planning. The P4 slice adds one fixed
+schema2 owned-LXC memory procedure with executable preflight, guarded dispatch,
+independent configured/cgroup postchecks and explicit uncertainty. Its catalog
+path is tested with the actual core/native inspector using synthetic transport.
+Real workflow and end-to-end recovery qualification remain P5.
 
 The [CmdMesh extraction plan](https://github.com/luis-lobo-ar/cmdmesh/blob/main/docs/roadmap.md)
 is the canonical product plan. Its goal is to convert actual operating knowledge
@@ -20,6 +23,7 @@ knowledge/discovery. **Planned rows below are not available catalog commands.**
 | Backup schedule | Ready manifest/playbook | Coverage, storage/mode compatibility, last-success evidence and independent restore proof |
 | Host maintenance | Ready manifest/playbook | Exact target/recovery/guest conditions, supported versions and verified post-maintenance outcomes |
 | LXC growth | Ready manifest/playbook | Explicit owner, capacity/identity checks and observed resulting resource values |
+| Verified LXC memory | Fixed procedure, actual core/native catalog planning contract | Successful real owned growth and availability qualification; no swap/rootfs/shrink/restart |
 | Persistent LXC/ZFS | Draft, no executable playbook | Agreed storage convention, retained-data rebuild and isolated restore evidence |
 
 Ready means local contract checks, not qualification for every host, application,

@@ -4,6 +4,15 @@ The test suite validates the v1 manifest contract, path confinement, local
 artifact existence, unsupported driver rejection and draft status. Ansible
 syntax checks resolve the actual `cmdmesh.proxmox` collection without connecting
 to infrastructure. Optional CmdMesh parser checks use its real compiled binary.
+The mixed operation catalog is parsed by core's canonical parser rather than a
+second Python schema implementation. Tests cover four schema1 check entries,
+the schema2 fixed memory profile and local validation of its private example.
+
+The memory composition test builds the actual pinned native inspector and uses
+that integration's pinned loopback TLS/synthetic SSH fixtures. The real CLI
+prepares this catalog entry and binds its exact metadata, requested selector,
+desired memory and capacity policy without enabling execution. This is a
+cross-package planning contract, not a real guest resize or availability test.
 
 ```sh
 CMDMESH_BIN=/path/to/cmdmesh python3 -m unittest discover -s tests -v

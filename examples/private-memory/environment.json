@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "providers": {
+    "proxmox-inspector": {
+      "executable": "/opt/cmdmesh/proxmox-inspect.pyz",
+      "expected_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "config": {
+        "schema_version": 1,
+        "origin": "example",
+        "controller": {"scratch_root": "/private/project/.generated/inspections", "tools": {"ansible-playbook": "/opt/cmdmesh/ansible/bin/ansible-playbook"}},
+        "tls": {"host": "pve.example.invalid", "port": 8006, "server_name": "pve.example.invalid", "ca_file": "/private/project/pve-ca.pem"},
+        "ssh": {"executable": "/usr/bin/ssh", "host": "pve.example.invalid", "port": 22, "user": "root", "identity_file": "/private/project/ssh-identity", "known_hosts_file": "/private/project/known_hosts"}
+      }
+    }
+  },
+  "packages": {"cmdmesh-proxmox": "/opt/cmdmesh-proxmox"},
+  "execution": {"allow_execution": false, "allow_mutations": false, "ansible_executable": "/opt/cmdmesh/ansible/bin/ansible-playbook", "timeout_seconds": 180}
+}

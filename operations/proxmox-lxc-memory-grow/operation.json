@@ -1,0 +1,42 @@
+{
+  "document_type": "cmdmesh.operation",
+  "schema_version": 2,
+  "operation_version": 1,
+  "id": "proxmox-lxc-memory-grow",
+  "aliases": ["grow owned LXC memory", "verify container memory growth"],
+  "title": "Grow one owned running LXC's memory",
+  "summary": "Prepare a fixed guarded memory change with fresh identity, ownership, capacity and cgroup checks.",
+  "parameters": {
+    "inspector": {"type": "inspector", "required": true, "description": "SHA-pinned native provider reference from the private environment"},
+    "state_directory": {"type": "state-directory", "required": true, "description": "Existing owner-only durable directory for intent, locks and private evidence"},
+    "request": {"type": "memory-request", "required": true, "description": "Exact node, LXC selector, trusted host fingerprints and actual ownership/generation tags"},
+    "desired_memory_mb": {"type": "memory-mb", "required": true, "description": "Explicit desired memory ceiling; growth or already-desired only"},
+    "capacity_policy": {"type": "memory-capacity-policy", "required": true, "description": "Observed available headroom and private minimum remaining bytes; not a capacity reservation"}
+  },
+  "requirements": [
+    {"capability": "verified-procedure", "protocol_version": 1, "supported_tools": {"cmdmesh": ["0.3.0 with schema2 operation support; use the catalog's exact core pin"]}},
+    {"capability": "proxmox", "protocol_version": 1, "supported_tools": {"native-inspector": ["0.4.0"], "cmdmesh-proxmox-collection": ["0.2.1"], "pve-manager": ["9.2.21"], "pve-container": ["6.1.14"], "ansible-core": ["2.19.4", "2.20.4"], "openssh": [">=8.9,<11.0"]}}
+  ],
+  "entrypoint": {"driver": "procedure-plan", "profile": "proxmox-lxc-memory", "profile_version": 1},
+  "expected_results": [
+    "Planning reads current remote state, freezes private intent and returns a cmdmesh.procedure.plan bound to this operation's exact metadata",
+    "Separately approved CLI execution performs at most one guarded memory dispatch and independently checks configured and enforced memory",
+    "Known failure or unknown completion never becomes verified solely because Ansible exited zero or current checks pass"
+  ],
+  "known_failures": [
+    {"code": "memory-ownership-unqualified", "summary": "Observed ownership, generation or lifecycle control does not match the private request", "next_checks": ["Inspect the native diagnostic receipt, actual guest tags and owning controller"], "recovery": ["Reconcile ownership outside this operation; never add tags merely to bypass refusal"]},
+    {"code": "memory-capacity-insufficient", "summary": "Current reported capacity does not satisfy the explicit headroom policy", "next_checks": ["Inspect current host memory, desired increase and private reserve"], "recovery": ["Resolve capacity or review a different explicit policy, then prepare a new plan"]},
+    {"code": "stale-plan", "summary": "A bound input, source, baseline or runtime changed after preparation", "next_checks": ["Compare phase receipts and current subject against the reviewed plan"], "recovery": ["Reconcile the change and prepare a new plan; do not rewrite the old frozen intent"]},
+    {"code": "uncertain", "summary": "Command completion, subject continuity or retained final evidence is unknown", "next_checks": ["Read historical procedure status, private phase receipts and independent current host state"], "recovery": ["Retain state and reconcile before making another plan; never replay a consumed plan or shrink automatically"]}
+  ],
+  "provenance": {
+    "references": ["README.md", "https://github.com/luis-lobo-ar/cmdmesh/blob/main/docs/verified-procedures.md", "https://github.com/luis-lobo-ar/cmdmesh-proxmox/blob/main/docs/lxc-memory-evidence.md"],
+    "qualification": "Actual core/native catalog planning with loopback TLS and synthetic SSH; core dispatch/postcheck failure contracts use synthetic targets",
+    "limitations": [
+      "Successful real Proxmox growth, application availability and independent restore remain separately qualified milestones",
+      "Memory only: no swap, shrink, rootfs, restart, general workflow or automatic rollback",
+      "Shared durable local state coordinates participating controllers only; another machine or state directory is outside its lock",
+      "Declared prerequisites are not certification; input validation is local, full qualification happens during preparation and execution"
+    ]
+  }
+}

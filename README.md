@@ -1,6 +1,7 @@
 # CmdMesh recipes
 
-Reusable operating procedures built from ordinary Ansible playbooks. Your
+Reusable operating procedures using ordinary Ansible playbooks and fixed verified
+profiles. Your
 inventory, credentials, state and execution evidence stay in your own private
 environment repository. The recipes do not depend on Neo or its configuration.
 
@@ -12,6 +13,7 @@ environment repository. The recipes do not depend on Neo or its configuration.
 | [Backup schedule](recipes/proxmox-backup-schedule/README.md) | Ready | Explicit guest backup jobs, retention and schedules |
 | [Host maintenance](recipes/proxmox-host-maintenance/README.md) | Ready | Assessment by default; qualified package update/reboot opt-in |
 | [LXC growth](recipes/proxmox-lxc-growth/README.md) | Ready | Ansible-owned memory/swap and rootfs growth |
+| [Verified LXC memory growth](operations/proxmox-lxc-memory-grow/README.md) | Contract tested | One owned running LXC; current identity/capacity, guarded dispatch and independent cgroup checks |
 | [Persistent ZFS / recreatable LXC](recipes/ephemeral-lxc-zfs/README.md) | Draft | Design checklist only; no executable steps |
 
 **Ready means the recipe contract and local checks pass. It does not mean your
@@ -60,8 +62,10 @@ and growth recipes require additional private opt-ins described in their READMEs
 
 ## Use CmdMesh
 
-With core **0.2.0** or later, discover the four implemented check-planning
-operations by intent before looking up a playbook:
+With the exact core revision in `.github/core.json`, discover four static check
+plans and one fixed memory procedure by intent before reconstructing commands.
+The check-only entries use schema1; the verified memory entry requires schema2
+support in the pinned core:
 
 ```sh
 cmdmesh operation list --catalog . --query 'host tools'
@@ -74,19 +78,28 @@ cmdmesh --config /path/to/private/environment.json operation plan \
 ```
 
 The private inputs file contains `{"target":"lab"}`, using your environment's
-actual target name. Each `operation.json` describes supported versions, the
+actual target name. Each check operation describes supported versions, the
 mandatory target reference, exact entrypoint, known failures, next checks and
-recovery. Discovery/validation/planning runs no Ansible or infrastructure command;
+recovery. Discovery, validation and static recipe planning run no infrastructure command;
 declared prerequisites remain unevaluated. The resulting plan is the existing
 schema-1 recipe plan with unchanged execution policy. Metadata is colocated with
 the recipe so edits invalidate its digest. See the
 [operation contract](https://github.com/luis-lobo-ar/cmdmesh/blob/main/docs/operations.md).
 
-All four entries prepare **check** plans. Existing explicit `recipe plan --operation apply`
+All four schema1 entries prepare **check** plans. Existing explicit `recipe plan --operation apply`
 remains the path for separately reviewed apply planning.
 The draft persistence procedure is not advertised as an implemented operation.
-Existing schema-1 recipe discovery/planning also works with older core releases;
-the new operation commands require 0.2.0. CI pins the exact tested core revision.
+Existing schema-1 recipe discovery/planning also works with older core releases.
+Use the pinned core for discovery across this catalog's mixed operation schemas.
+
+For **verified memory growth**, use the separate
+[private memory example](examples/private-memory/README.md) and
+[walkthrough](operations/proxmox-lxc-memory-grow/README.md). It consumes five
+typed private inputs and collects current remote state during planning. Its
+`cmdmesh.procedure.plan` is executed through `procedure execute`, with an exact
+reviewed digest and the existing private permissions. Completion and independently
+verified state are separate outcomes; uncertain work is never automatically
+replayed. Real growth and recovery qualification remain separate milestones.
 
 The CLI adds catalog discovery and approval bound to exact input content. It does
 not make arbitrary Ansible code safe or replace operator review.
@@ -101,7 +114,7 @@ cmdmesh recipe execute --plan /path/to/private/baseline-check.plan.json \
   --approve-digest DIGEST_FROM_PLAN
 ```
 
-Planning is static: no Ansible, Terraform or provider command runs. Execution
+Recipe planning is static: no Ansible, Terraform or provider command runs. Execution
 requires `allow_execution: true` in the private environment. An apply needs a
 separate `--operation apply` plan, its exact digest and `allow_mutations: true`.
 Keep both policies false until an operator approves that environment. Changed
@@ -112,14 +125,16 @@ Inventory hosts must belong to `cmdmesh_targets`. Choose one lifecycle owner:
 Terraform or Ansible, never both for the same guest resource fields. The growth
 recipe requires `lifecycle_owner: "ansible"` in CmdMesh and matching Ansible vars.
 
-Execution is CLI-only in v0.1. MCP exposes discovery/inspection/static planning,
-not recipe apply. Terraform execution remains direct tooling with reviewed saved
+Execution is CLI-only. MCP exposes discovery, inspection and planning, including
+remote reads/private writes for the fixed procedure; no apply action. Terraform execution remains direct tooling with reviewed saved
 plans; this catalog does not pretend to offer CmdMesh Terraform apply.
 
 ## Contribute a recipe
 
-Use a manifest with the exact v1 fields, a README with verification and recovery,
-and ordinary playbooks calling integration roles by fully qualified name.
+For recipes, use a manifest with the exact v1 fields, a README with verification
+and recovery, and ordinary playbooks calling integration roles by fully qualified
+name. A schema2 operation selects only a fixed profile implemented by the pinned
+core; it cannot add metadata-supplied commands or a new workflow engine.
 Do not duplicate provider roles, embed secrets, invent restore guarantees or mark
 an unimplemented workflow ready. Add negative tests when changing validation.
 

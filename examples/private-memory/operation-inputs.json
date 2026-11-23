@@ -1,0 +1,16 @@
+{
+  "inspector": "proxmox-inspector",
+  "state_directory": "/private/project/.generated/procedure-state",
+  "request": {
+    "selector": {"origin": "example", "node": "node-a", "kind": "proxmox.lxc", "vmid": 101},
+    "host_profile": {
+      "machine_id_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "ca_certificate_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "leaf_certificate_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "owner_tag": "cmdmesh-own-22222222222222222222222222222222",
+    "generation_tag": "cmdmesh-gen-33333333333333333333333333333333"
+  },
+  "desired_memory_mb": 2048,
+  "capacity_policy": {"mode": "observed-available-headroom", "minimum_remaining_bytes": 1073741824}
+}
