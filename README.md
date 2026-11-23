@@ -14,7 +14,7 @@ environment repository. The recipes do not depend on Neo or its configuration.
 | [Host maintenance](recipes/proxmox-host-maintenance/README.md) | Ready | Assessment by default; qualified package update/reboot opt-in |
 | [LXC growth](recipes/proxmox-lxc-growth/README.md) | Ready | Ansible-owned memory/swap and rootfs growth |
 | [Verified LXC memory growth](operations/proxmox-lxc-memory-grow/README.md) | Contract tested | One owned running LXC; current identity/capacity, guarded dispatch and independent cgroup checks |
-| [Persistent ZFS / recreatable LXC](recipes/ephemeral-lxc-zfs/README.md) | Draft | Design checklist only; no executable steps |
+| [Persistent ZFS / recreatable LXC](recipes/ephemeral-lxc-zfs/README.md) | Draft | Reference layout and [tested ledger fixture](examples/reference-ledger/README.md); no recovery automation |
 
 **Ready means the recipe contract and local checks pass. It does not mean your
 hardware, restore procedure or production environment has been qualified.**
