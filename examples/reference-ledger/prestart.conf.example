@@ -1,0 +1,2 @@
+[Service]
+ExecStartPre=/usr/bin/python3 -I -S -B /usr/local/lib/reference-ledger/prestart_guard.py --manifest /etc/cmdmesh/reference-ledger.json --vmid %i

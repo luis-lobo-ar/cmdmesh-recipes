@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "node": "pve-example",
+  "vmid": 101,
+  "owner_tag": "cmdmesh-own-11111111111111111111111111111111",
+  "generation_tag": "cmdmesh-gen-22222222222222222222222222222222",
+  "generated_config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "mapping": {
+    "offset": 100000,
+    "length": 65536,
+    "uid": 1100,
+    "gid": 1100
+  },
+  "rootfs": {
+    "volume": "local:101/vm-101-disk-0.raw",
+    "path": "/var/lib/vz/images/101/vm-101-disk-0.raw",
+    "bytes": 2147483648,
+    "inode": 123,
+    "uuid": "11111111-2222-3333-4444-555555555555"
+  },
+  "datasets": {
+    "data": {
+      "name": "example/reference/data",
+      "guid": "1",
+      "mountpoint": "/srv/example/data"
+    },
+    "config": {
+      "name": "example/reference/config",
+      "guid": "2",
+      "mountpoint": "/srv/example/config"
+    }
+  },
+  "application": {
+    "initialized": true,
+    "instance_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "config_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  }
+}
