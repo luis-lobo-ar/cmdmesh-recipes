@@ -118,3 +118,20 @@ copies need an explicit cutover policy.
 A failed guard leaves the container stopped when systemd invokes it before
 `ExecStart`. Recovery requires inspection of the named target, mounts, and retained
 state. Disabling the check or initializing an empty replacement is not recovery.
+
+## Real-host qualification
+
+The November 24, 2026 disposable trial used `pve-manager 9.2.21` and kernel
+`6.17.13-1-pve`. Both normal and debug managed starts refused an absent data
+dataset with fresh unit invocation IDs and no main process. The empty covering
+directory stayed unchanged. Remounting the same dataset allowed a native API
+start; the original authenticated record, credentials and account survived.
+
+The native task returned a known Systemd255 warning. Independent application,
+database, mount, mapping, process and guard checks established readiness while
+preserving that warning. The intentionally failed debug-unit test state was
+cleared separately after those checks; no extra start was issued.
+
+This qualifies the managed-start refusal and restart case for that reference
+layout. Rootfs replacement and independent encrypted restore remain separate
+requirements. The broader persistence recipe is still a draft.
