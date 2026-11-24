@@ -1,0 +1,15 @@
+---
+- name: Register one new backup-only NFS storage
+  hosts: cmdmesh_targets
+  become: true
+  gather_facts: false
+  serial: 1
+  pre_tasks:
+    - name: Require exactly one explicitly targeted host
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts_all | length == 1
+          - proxmox_nfs_backup_storage_create_only is defined
+          - proxmox_nfs_backup_storage_create_only is sameas true
+  roles:
+    - cmdmesh.proxmox.proxmox_nfs_backup_storage

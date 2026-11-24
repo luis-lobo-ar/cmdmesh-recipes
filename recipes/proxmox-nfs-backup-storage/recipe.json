@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "proxmox-nfs-backup-storage",
+  "title": "Register a new NFS backup store",
+  "summary": "Create one explicitly selected backup-only NFS storage without adopting an existing storage ID or covering an existing path.",
+  "status": "ready",
+  "requirements": ["Exactly one explicitly selected Proxmox host", "Reviewed existing NFS export and mount options", "Absent storage ID and default mountpoint", "Pinned cmdmesh.proxmox collection with the create-only guard"],
+  "dependencies": ["proxmox"],
+  "steps": [{"id": "register-nfs", "driver": "ansible", "playbook": "playbook.yml"}],
+  "verification": ["Verify actual NFS export, filesystem type, mountpoint and mount options on the managed host", "Verify a private owned destination before any backup write", "Do not count a mount or storage status as a completed backup or restore"],
+  "recovery": "README.md"
+}

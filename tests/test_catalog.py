@@ -13,11 +13,11 @@ SPEC.loader.exec_module(catalog)
 
 
 class CatalogContract(unittest.TestCase):
-    def test_initial_catalog_has_four_runnable_recipes_and_one_draft(self):
+    def test_catalog_has_five_runnable_recipes_and_one_draft(self):
         manifests = catalog.validate_catalog(ROOT)
         self.assertEqual({item["id"] for item in manifests if item["status"] == "ready"},
                          {"proxmox-host-baseline", "proxmox-backup-schedule",
-                          "proxmox-host-maintenance", "proxmox-lxc-growth"})
+                          "proxmox-host-maintenance", "proxmox-lxc-growth", "proxmox-nfs-backup-storage"})
         draft = next(item for item in manifests if item["id"] == "ephemeral-lxc-zfs")
         self.assertEqual(draft["status"], "draft")
         self.assertEqual(draft["steps"], [])

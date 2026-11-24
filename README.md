@@ -11,6 +11,7 @@ environment repository. The recipes do not depend on Neo or its configuration.
 | --- | --- | --- |
 | [Host baseline](recipes/proxmox-host-baseline/README.md) | Ready | Explicit host package selection; no guest-wide installation |
 | [Backup schedule](recipes/proxmox-backup-schedule/README.md) | Ready | Explicit guest backup jobs, retention and schedules |
+| [New NFS backup store](recipes/proxmox-nfs-backup-storage/README.md) | Ready | One new backup-only registration; refuses existing IDs and mountpoints |
 | [Host maintenance](recipes/proxmox-host-maintenance/README.md) | Ready | Assessment by default; qualified package update/reboot opt-in |
 | [LXC growth](recipes/proxmox-lxc-growth/README.md) | Ready | Ansible-owned memory/swap and rootfs growth |
 | [Verified LXC memory growth](operations/proxmox-lxc-memory-grow/README.md) | Contract tested | One owned running LXC; current identity/capacity, guarded dispatch and independent cgroup checks |
