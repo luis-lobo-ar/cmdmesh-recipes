@@ -12,4 +12,4 @@
           - proxmox_nfs_backup_storage_create_only is defined
           - proxmox_nfs_backup_storage_create_only is sameas true
   roles:
-    - cmdmesh.proxmox.proxmox_nfs_backup_storage
+    - cmdmesh.proxmox.proxmox_nfs_backup_create

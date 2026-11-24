@@ -1,7 +1,7 @@
 # Register a new NFS backup store
 
 Use this when an existing NFS export must become a new backup-only storage on
-one Proxmox host. It reuses the public `proxmox_nfs_backup_storage` role. It does
+one Proxmox host. It reuses the public `proxmox_nfs_backup_create` role. It does
 not configure the NAS, modify its export or create a backup schedule.
 
 Supply these values through a private variables file:
@@ -33,8 +33,9 @@ cmdmesh --config /path/to/private/environment.json recipe plan \
 Review and execute the resulting digest through the ordinary recipe workflow.
 A separately authorized apply requires a fresh plan with `--operation apply`.
 The collection refuses normal execution without explicit change permission.
-Pin the reviewed collection revision containing the create-only guard; older
-collections cannot supply that behavior merely by receiving the new variable.
+Pin the reviewed collection 0.2.2 revision containing the distinct create-only
+role. Older collections fail role resolution before connecting, instead of
+silently ignoring the new variable.
 
 The storage ID must be absent. The default `/mnt/pve/<storage-id>` path must also
 be absent, including any symlink or uncovered empty directory. Existing storage
