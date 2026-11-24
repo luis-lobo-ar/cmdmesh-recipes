@@ -1,10 +1,14 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "node": "pve-example",
   "vmid": 101,
   "owner_tag": "cmdmesh-own-11111111111111111111111111111111",
   "generation_tag": "cmdmesh-gen-22222222222222222222222222222222",
-  "generated_config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "generated_config_stable_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "cpu_policy": {
+    "count": 1,
+    "allowed": [0, 1, 2, 3]
+  },
   "mapping": {
     "offset": 100000,
     "length": 65536,

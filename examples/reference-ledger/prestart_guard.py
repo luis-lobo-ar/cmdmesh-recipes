@@ -69,7 +69,8 @@ def validate_policy(policy):
             "vmid",
             "owner_tag",
             "generation_tag",
-            "generated_config_sha256",
+            "generated_config_stable_sha256",
+            "cpu_policy",
             "mapping",
             "rootfs",
             "datasets",
@@ -78,7 +79,7 @@ def validate_policy(policy):
         "policy-shape",
     )
     require(
-        type(policy["schema_version"]) is int and policy["schema_version"] == 1,
+        type(policy["schema_version"]) is int and policy["schema_version"] == 2,
         "policy-version",
     )
     require(integer(policy["vmid"], 100, 999999), "target-invalid")
@@ -89,8 +90,19 @@ def validate_policy(policy):
         "ownership-invalid",
     )
     require(
-        matches(r"[a-f0-9]{64}", policy["generated_config_sha256"]),
+        matches(r"[a-f0-9]{64}", policy["generated_config_stable_sha256"]),
         "generated-config-policy-invalid",
+    )
+    cpu = policy["cpu_policy"]
+    require(
+        type(cpu) is dict
+        and set(cpu) == {"count", "allowed"}
+        and type(cpu["allowed"]) is list
+        and 1 <= len(cpu["allowed"]) <= 4096
+        and all(integer(value, 0, 65535) for value in cpu["allowed"])
+        and cpu["allowed"] == sorted(set(cpu["allowed"]))
+        and integer(cpu["count"], 1, len(cpu["allowed"])),
+        "cpu-policy-invalid",
     )
     mapping = policy["mapping"]
     require(
@@ -180,6 +192,76 @@ def private(value, uid, gid, directory=False):
     )
 
 
+def generated_fingerprint(raw):
+    require(
+        type(raw) is bytes and 0 < len(raw) <= 65536, "generated-config-unqualified"
+    )
+    lines = raw.splitlines(keepends=True)
+    candidates = [
+        index
+        for index, line in enumerate(lines)
+        if line.strip().startswith(b"lxc.cgroup2.cpuset.cpus")
+    ]
+    require(len(candidates) == 1, "cpu-directive-unqualified")
+    index = candidates[0]
+    match = re.fullmatch(
+        rb"(lxc\.cgroup2\.cpuset\.cpus = )([0-9]+(?:-[0-9]+)?(?:,[0-9]+(?:-[0-9]+)?)*)(\n)",
+        lines[index],
+    )
+    require(match is not None, "cpu-directive-unqualified")
+    cpus = []
+    for part in match[2].split(b","):
+        bounds = [int(value) for value in part.split(b"-")]
+        low, high = bounds[0], bounds[-1]
+        require(
+            0 <= low <= high <= 65535
+            and high - low < 4096
+            and len(cpus) + high - low + 1 <= 4096,
+            "cpu-selection-unqualified",
+        )
+        cpus.extend(range(low, high + 1))
+    require(cpus == sorted(set(cpus)), "cpu-selection-unqualified")
+    # Only this value is generator-managed. All other bytes remain attributable.
+    lines[index] = match[1] + match[3]
+    return hashlib.sha256(b"".join(lines)).hexdigest(), cpus
+
+
+def validate_cpu(policy, config, facts):
+    selection, available = facts["cpu_selection"], facts["cpu_available"]
+    require(
+        all(
+            type(value) is list
+            and value
+            and all(integer(cpu, 0, 65535) for cpu in value)
+            and value == sorted(set(value))
+            for value in (selection, available)
+        )
+        and type(config.get("cores")) is int
+        and config["cores"] == len(selection) == policy["cpu_policy"]["count"]
+        and set(selection) <= set(policy["cpu_policy"]["allowed"]) & set(available),
+        "cpu-selection-mismatch",
+    )
+    require(
+        facts["generated_config_stable_sha256"]
+        == policy["generated_config_stable_sha256"],
+        "generated-config-mismatch",
+    )
+
+
+def validate_dataset_properties(policy, role, actual):
+    expected = policy["datasets"][role]
+    require(
+        actual
+        == {
+            "guid": expected["guid"],
+            "mounted": "yes",
+            "mountpoint": expected["mountpoint"],
+            "org.cmdmesh:owner": policy["owner_tag"],
+        },
+        role + "-dataset-mismatch",
+    )
+
+
 def validate(policy, facts, vmid):
     validate_policy(policy)
     require(type(vmid) is int and vmid == policy["vmid"], "wrong-target")
@@ -220,10 +302,7 @@ def validate(policy, facts, vmid):
         },
         "mapping-mismatch",
     )
-    require(
-        facts["generated_config_sha256"] == policy["generated_config_sha256"],
-        "generated-config-mismatch",
-    )
+    validate_cpu(policy, config, facts)
     image = facts["rootfs"]
     require(
         image["resolved_path"] == root["path"]
@@ -252,16 +331,7 @@ def validate(policy, facts, vmid):
             and mount_options == {"mp": target, "backup": "0"},
             role + "-bind-mismatch",
         )
-        require(
-            actual["properties"]
-            == {
-                "guid": expected["guid"],
-                "mounted": "yes",
-                "mountpoint": expected["mountpoint"],
-                "org.cmdmesh:owner": policy["owner_tag"],
-            },
-            role + "-dataset-mismatch",
-        )
+        validate_dataset_properties(policy, role, actual["properties"])
         require(
             actual["mount"]
             == {
@@ -383,10 +453,13 @@ def collect(policy):
     generated_raw = read_file(
         Path("/var/lib/lxc") / str(policy["vmid"]) / "config", 65536
     )
-    require(
-        hashlib.sha256(generated_raw).hexdigest() == policy["generated_config_sha256"],
-        "generated-config-mismatch",
-    )
+    stable, selection = generated_fingerprint(generated_raw)
+    cpu_facts = {
+        "generated_config_stable_sha256": stable,
+        "cpu_selection": selection,
+        "cpu_available": sorted(os.sched_getaffinity(0)),
+    }
+    validate_cpu(policy, config, cpu_facts)
     generated = generated_raw.decode()
     id_maps = {"u": [], "g": []}
     for line in generated.splitlines():
@@ -439,6 +512,7 @@ def collect(policy):
             all(len(row) == 2 for row in rows) and len(rows) == len(dict(rows)),
             "dataset-observation-unqualified",
         )
+        validate_dataset_properties(policy, role, dict(rows))
         mounts = decode(
             native(
                 [
@@ -482,6 +556,7 @@ def collect(policy):
     return {
         "config": config,
         "generated_config_sha256": hashlib.sha256(generated_raw).hexdigest(),
+        **cpu_facts,
         "id_maps": id_maps,
         "rootfs": image,
         "datasets": datasets,

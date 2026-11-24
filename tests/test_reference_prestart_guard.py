@@ -20,12 +20,13 @@ spec.loader.exec_module(guard)
 
 def fixture():
     policy = {
-        "schema_version": 1,
+        "schema_version": 2,
         "node": "pve-example",
         "vmid": 101,
         "owner_tag": "cmdmesh-own-" + "1" * 32,
         "generation_tag": "cmdmesh-gen-" + "2" * 32,
-        "generated_config_sha256": "c" * 64,
+        "generated_config_stable_sha256": "c" * 64,
+        "cpu_policy": {"count": 1, "allowed": [0, 1, 2, 3]},
         "mapping": {"offset": 100000, "length": 65536, "uid": 1100, "gid": 1100},
         "rootfs": {
             "volume": "local:101/vm-101-disk-0.raw",
@@ -49,6 +50,7 @@ def fixture():
         },
     }
     config = {
+        "cores": 1,
         "unprivileged": 1,
         "tags": policy["owner_tag"] + ";" + policy["generation_tag"],
         "rootfs": policy["rootfs"]["volume"] + ",size=2G",
@@ -59,7 +61,10 @@ def fixture():
     private_file = {"uid": 101100, "gid": 101100, "mode": 0o600, "regular": True}
     facts = {
         "config": config,
-        "generated_config_sha256": "c" * 64,
+        "generated_config_sha256": "e" * 64,
+        "generated_config_stable_sha256": "c" * 64,
+        "cpu_selection": [0],
+        "cpu_available": [0, 1, 2, 3],
         "id_maps": {"u": [[0, 100000, 65536]], "g": [[0, 100000, 65536]]},
         "rootfs": {
             "inode": 123,
@@ -197,8 +202,66 @@ class GuardTests(unittest.TestCase):
             guard.validate(self.policy, self.facts, 101)
 
     def test_stale_generated_privilege_or_network_cannot_pass_api_config_checks(self):
-        self.facts["generated_config_sha256"] = "d" * 64
+        self.facts["generated_config_stable_sha256"] = "d" * 64
         with self.assertRaises(guard.Refused):
+            guard.validate(self.policy, self.facts, 101)
+
+    def test_only_generator_managed_cpu_placement_can_change(self):
+        first = b"lxc.idmap = u 0 100000 65536\nlxc.cgroup2.cpuset.cpus = 0\n"
+        second = first.replace(b"cpuset.cpus = 0", b"cpuset.cpus = 3")
+        sha, cpus = guard.generated_fingerprint(first)
+        other_sha, other_cpus = guard.generated_fingerprint(second)
+        self.assertEqual(sha, other_sha)
+        self.assertEqual(cpus, [0])
+        self.assertEqual(other_cpus, [3])
+        for changed in (
+            second + b"lxc.apparmor.profile = unconfined\n",
+            second.replace(b"100000", b"0"),
+            second + b"lxc.net.0.type = veth\n",
+        ):
+            self.assertNotEqual(guard.generated_fingerprint(changed)[0], sha)
+        for raw in (
+            b"",
+            first.replace(b" = 0\n", b" = \n"),
+            first + second,
+            first.replace(b" = 0\n", b" = 0,0\n"),
+            first.replace(b" = 0\n", b" = 3-0\n"),
+            first.replace(b" = 0\n", b" = 0-65535\n"),
+        ):
+            with self.subTest(raw=raw), self.assertRaises(guard.Refused):
+                guard.generated_fingerprint(raw)
+
+    def test_cpu_selection_must_obey_policy_count_and_actual_availability(self):
+        for selection, available in (
+            ([], [0, 1, 2, 3]),
+            ([0, 0], [0, 1, 2, 3]),
+            ([0, 1], [0, 1, 2, 3]),
+            ([4], [0, 1, 2, 3, 4]),
+            ([3], [0, 1, 2]),
+            ([True], [0, 1, 2, 3]),
+        ):
+            facts = copy.deepcopy(self.facts)
+            facts.update(cpu_selection=selection, cpu_available=available)
+            with self.subTest(
+                selection=selection, available=available
+            ), self.assertRaises(guard.Refused):
+                guard.validate(self.policy, facts, 101)
+        self.facts["config"]["cores"] = 2
+        with self.assertRaises(guard.Refused):
+            guard.validate(self.policy, self.facts, 101)
+
+    def test_legacy_full_hash_policy_requires_an_explicit_version_transition(self):
+        old = copy.deepcopy(self.policy)
+        old["schema_version"] = 1
+        old["generated_config_sha256"] = old.pop("generated_config_stable_sha256")
+        del old["cpu_policy"]
+        with self.assertRaises(guard.Refused):
+            guard.validate_policy(old)
+
+    def test_valid_cpu_regeneration_does_not_mask_the_missing_mount_reason(self):
+        self.facts["cpu_selection"] = [3]
+        self.facts["datasets"]["data"]["properties"]["mounted"] = "no"
+        with self.assertRaisesRegex(guard.Refused, "^data-dataset-mismatch$"):
             guard.validate(self.policy, self.facts, 101)
 
     def test_uninitialized_missing_or_replaced_application_state_refuses(self):

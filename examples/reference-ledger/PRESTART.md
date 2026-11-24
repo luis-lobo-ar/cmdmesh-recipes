@@ -36,7 +36,8 @@ tags or replacing observations to make an unrelated target match is not adoption
 | --- | --- |
 | `node`, `vmid` | Exact managed Proxmox node and container. |
 | `owner_tag`, `generation_tag` | Expected lifecycle owner and generation. |
-| `generated_config_sha256` | Approved complete `/var/lib/lxc/<vmid>/config` contents consumed by LXC. |
+| `generated_config_stable_sha256` | Approved generated LXC bytes with only the single CPU-selection value replaced by an empty hash placeholder. |
+| `cpu_policy` | Approved CPU count and permitted host CPU IDs. Selection must also belong to the guard process's actual available affinity. |
 | `mapping` | Host offset, mapping length, and application UID and GID. |
 | `rootfs` | Expected volume, backing file, size, inode, and ext4 UUID. |
 | `datasets` | Separate dataset names, GUIDs, and host mountpoints. |
@@ -47,16 +48,31 @@ both retained datasets. The manifest contains a configuration hash, not the
 authentication token. Changes to the rootfs or credentials require an explicitly
 reviewed manifest update after the new state passes validation.
 
-The generated LXC configuration is pinned in full. Direct systemctl starts do not
-regenerate that file. Matching API configuration alone does not establish what
-`lxc-start` will consume. An authorized change to memory, CPU, hostname, or another
-generated setting requires regeneration, review, and an explicit manifest update.
-An unexpected hash refuses startup. The guard does not refresh its own approval.
+Policy version `2` handles Proxmox's regenerated CPU placement. The generated
+file must contain exactly one strictly parsed `lxc.cgroup2.cpuset.cpus` line.
+Its nonempty CPU selection must be unique, match the approved and configured core
+count, and fit both the approved CPU IDs and actual available affinity. Empty,
+duplicate, reversed, oversized or unavailable selections refuse startup.
+
+The hash covers every other byte, including the CPU line's key, spacing and
+newline. Compute it from approved bytes with `generated_fingerprint(raw)[0]`;
+the function also returns the parsed selection. The empty value used for hashing
+is never a valid observed runtime selection. Only CPU placement within these
+bounds can vary without changing approval. Memory, hostname, UID mapping, mount,
+network or other directive changes still require explicit review and a manifest
+update. The guard never refreshes its own approval.
+
+Direct systemctl starts consume the generated file. Matching API configuration
+alone does not establish what `lxc-start` will use. Version `1` manifests are
+rejected; migration requires preparing a version `2` policy and explicitly
+attaching the reviewed guard. Existing manifests are never silently upgraded.
 
 The data and configuration directories must belong to the mapped application UID
 and GID with mode `0700`. The identity and database files require mode `0600` and
 the same ownership. For example, container UID `1100` with offset `100000` maps to
 host UID `101100`. Bootstrap owns the initial assignment. The guard never changes it.
+The guest service also needs a registered locked, non-login application account
+with those IDs before startup; numeric service IDs alone are not qualification.
 
 ## Command and outcomes
 
