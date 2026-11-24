@@ -26,6 +26,11 @@ Local tests establish those application behaviors only. Actual ZFS snapshots,
 rootfs replacement, mount guards, backup encryption, source-unavailable restore
 and independently verified application writes remain separate qualification work.
 
+The standalone [pre-start guard](PRESTART.md) checks host dataset GUIDs, actual
+mounts, UID mappings, and retained application identity before a managed start.
+Its normal and debug instance drop-ins are examples pending disposable-host
+qualification. The persistence recipe remains a draft.
+
 ## Run as the application user
 
 Prepare separate existing data, config and runtime directories, owned by the
@@ -71,7 +76,7 @@ python3 -m unittest discover -s tests -p test_reference_ledger.py -v
 ```
 
 The tests use project-local temporary files and a real Unix-socket subprocess.
-Eleven cases cover persisted records/credentials, missing DB with no replacement,
+The tests cover persisted records/credentials, missing DB with no replacement,
 wrong identity/UID/modes, unauthorized writes, idempotency/conflicts, malformed
 tokens, full-database uncertainty, unexpected triggers and actual client requests.
 They do not qualify ZFS mounts, UID mappings, encrypted backups or disaster recovery.
