@@ -1,0 +1,15 @@
+{
+  "document_type": "cmdmesh.operation",
+  "schema_version": 1,
+  "operation_version": 1,
+  "id": "proxmox-nfs-backup-storage-check",
+  "aliases": ["plan a new backup store", "check nfs backup registration"],
+  "title": "Plan a new backup-only NFS storage",
+  "summary": "Prepare a bound check-mode plan for one new explicitly selected NFS storage; planning does not mount or contact a host.",
+  "parameters": {"target": {"type": "target", "required": true, "description": "One explicit target from the private environment"}},
+  "requirements": [{"capability": "ansible-recipe", "protocol_version": 1, "supported_tools": {"ansible-core": ["2.20.4"]}}],
+  "entrypoint": {"driver": "recipe-plan", "manifest": "recipe.json", "operation": "check"},
+  "expected_results": ["A static plan bound to the recipe, collection, private target and variables", "No host, NAS or package changes during planning"],
+  "known_failures": [{"code": "storage-already-exists", "summary": "Create-only registration refuses an existing storage ID or mountpoint", "next_checks": ["Inspect the prior registration, actual backing and retained operation evidence"], "recovery": ["Reconcile partial work; do not force adoption or delete an unowned path"]}, {"code": "nfs-unavailable", "summary": "Server reachability or an active storage status does not establish a completed backup", "next_checks": ["Check export authorization, mount backing/options and the owned destination"], "recovery": ["Retain partial evidence and stop before backup writes"]}],
+  "provenance": {"references": ["README.md"], "qualification": "Local recipe, role guard and plan contracts", "limitations": ["Planning is static and requirements are descriptive metadata", "No independent backup, restore or physical-host-loss qualification"]}
+}

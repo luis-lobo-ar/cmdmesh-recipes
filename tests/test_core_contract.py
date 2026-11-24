@@ -20,7 +20,7 @@ class CoreContract(unittest.TestCase):
         entries = json.loads(result.stdout)["items"]
         expected = {"proxmox-host-baseline-check", "proxmox-backup-schedule-check",
                     "proxmox-host-maintenance-check", "proxmox-lxc-growth-check",
-                    "proxmox-lxc-memory-grow"}
+                    "proxmox-lxc-memory-grow", "proxmox-nfs-backup-storage-check"}
         self.assertEqual({entry["id"] for entry in entries}, expected)
         for entry in entries:
             inspected = subprocess.run([BINARY, "operation", "inspect", entry["id"],
