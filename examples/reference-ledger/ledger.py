@@ -2,6 +2,7 @@
 
 import argparse
 from contextlib import closing
+import fcntl
 import hmac
 import json
 import os
@@ -110,14 +111,25 @@ def initialize(data, config, identity):
 class Ledger:
     def __init__(self, data, config):
         self.db = None
+        self.configuration = None
         self.writes_uncertain = False
         try:
             data = private_path(data, directory=True)
             config = private_path(config, directory=True)
             source = private_path(config / "application.json")
-            if source.stat().st_size > 4096:
+            original = source.stat()
+            if original.st_size > 4096:
                 raise UnqualifiedState("application-configuration-oversized")
-            self.identity = json.loads(source.read_text())
+            descriptor = os.open(source, os.O_RDONLY | os.O_NOFOLLOW)
+            self.configuration = os.fdopen(descriptor, "rb")
+            opened = os.fstat(self.configuration.fileno())
+            if (opened.st_dev, opened.st_ino) != (original.st_dev, original.st_ino):
+                raise UnqualifiedState("application-configuration-changed")
+            fcntl.flock(self.configuration, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            raw = self.configuration.read(4097)
+            if len(raw) > 4096:
+                raise UnqualifiedState("application-configuration-oversized")
+            self.identity = json.loads(raw)
             validate_identity(self.identity)
             database = private_path(data / "ledger.sqlite3")
             self.db = sqlite3.connect(
@@ -139,13 +151,18 @@ class Ledger:
         except (OSError, sqlite3.Error, ValueError):
             if self.db is not None:
                 self.db.close()
+            if self.configuration is not None:
+                self.configuration.close()
             raise UnqualifiedState("application-state-unqualified") from None
 
     def __enter__(self):
         return self
 
     def __exit__(self, *unused):
-        self.db.close()
+        try:
+            self.db.close()
+        finally:
+            self.configuration.close()
 
     def request(self, command):
         if (

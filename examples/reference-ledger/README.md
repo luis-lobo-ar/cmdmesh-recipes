@@ -14,6 +14,14 @@ identity, wrong UID or insecure ownership/modes. It must not silently initialize
 empty replacement data. Writes require authentication and stable operation IDs;
 matching retries preserve a record, while conflicting content refuses.
 
+On Linux, each running ledger holds an exclusive advisory lock on the retained
+`application.json` identity file. A second process using that file refuses startup
+before opening the database or creating its socket. Normal shutdown and failed
+startup release the lock. Keep this identity file unchanged while a writer runs.
+The lock covers processes sharing the retained file; host pre-start guards must
+also verify dataset GUIDs, UID mapping and guest ownership. Independent copies
+need an explicit cutover policy.
+
 Local tests establish those application behaviors only. Actual ZFS snapshots,
 rootfs replacement, mount guards, backup encryption, source-unavailable restore
 and independently verified application writes remain separate qualification work.

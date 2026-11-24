@@ -68,6 +68,48 @@ class ReferenceLedger(unittest.TestCase):
             ledger.Ledger(self.data, self.config)
         self.assertEqual(list(self.data.iterdir()), [])
 
+    def test_second_process_cannot_start_for_the_same_retained_identity(self):
+        self.initialize()
+        with ledger.Ledger(self.data, self.config) as app:
+            child = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "examples/reference-ledger/ledger.py"),
+                    "serve",
+                    "--data",
+                    str(self.data),
+                    "--config",
+                    str(self.config),
+                    "--socket",
+                    str(self.root / "second.sock"),
+                ],
+                capture_output=True,
+                timeout=2,
+            )
+            self.assertEqual(child.returncode, 1)
+            self.assertEqual(json.loads(child.stdout), {"outcome": "refused"})
+            self.assertFalse((self.root / "second.sock").exists())
+            self.assertEqual(
+                app.request({"action": "read", "token": self.identity["token"]})[
+                    "outcome"
+                ],
+                "read",
+            )
+        # A normal stop releases ownership for the replacement process.
+        with ledger.Ledger(self.data, self.config) as replacement:
+            self.assertEqual(replacement.identity, self.identity)
+
+    def test_failed_database_open_releases_the_retained_identity_lock(self):
+        self.initialize()
+        database = self.data / "ledger.sqlite3"
+        saved = self.root / "saved.sqlite3"
+        database.rename(saved)
+        with self.assertRaises(ledger.UnqualifiedState):
+            ledger.Ledger(self.data, self.config)
+        saved.rename(database)
+        with ledger.Ledger(self.data, self.config) as replacement:
+            self.assertEqual(replacement.identity, self.identity)
+
     def test_wrong_identity_uid_or_permissions_cannot_open(self):
         self.initialize()
         original = json.loads((self.config / "application.json").read_text())
