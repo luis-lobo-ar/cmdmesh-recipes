@@ -5,6 +5,7 @@ does not guard an administrator deliberately invoking lxc-start outside systemd.
 """
 
 import argparse
+import errno
 import hashlib
 import json
 import os
@@ -643,6 +644,70 @@ def _file_seal(path, *, directory=False, limit=None, header=False):
     return result
 
 
+def _storage_seal(path):
+    """Seal an explicit config or observed implicit defaults without creating it."""
+    parent = path.parent
+    require(parent.resolve(strict=True) == parent, "storage-parent-unqualified")
+    fd = os.open(parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+
+        def parent_identity(info):
+            require(
+                stat.S_ISDIR(info.st_mode)
+                and info.st_uid == ROOT_UID
+                and not info.st_mode & 0o022,
+                "storage-parent-unqualified",
+            )
+            return [info.st_dev, info.st_ino, info.st_mode, info.st_uid, info.st_gid]
+
+        identity = parent_identity(os.fstat(fd))
+        require(parent_identity(parent.lstat()) == identity, "storage-parent-changed")
+
+        def leaf():
+            try:
+                return os.stat(path.name, dir_fd=fd, follow_symlinks=False)
+            except FileNotFoundError as error:
+                require(error.errno == errno.ENOENT, "storage-observation-unqualified")
+                return None
+
+        before = leaf()
+        if before is None:
+            result = {"state": "absent", "parent": identity}
+        else:
+            require(
+                stat.S_ISREG(before.st_mode)
+                and before.st_uid == ROOT_UID
+                and before.st_nlink == 1
+                and not before.st_mode & 0o022,
+                "storage-file-unqualified",
+            )
+            sealed = _file_seal(path, limit=65536)
+            require(
+                sealed["identity"] == list(control_stable(before)),
+                "storage-file-changed",
+            )
+            result = {"state": "present", "parent": identity, "file": sealed}
+        after = leaf()
+        require(
+            (before is None and after is None)
+            or (
+                before is not None
+                and after is not None
+                and control_stable(before) == control_stable(after)
+            ),
+            "storage-file-changed",
+        )
+        require(
+            parent.resolve(strict=True) == parent
+            and parent_identity(parent.lstat()) == identity
+            and parent_identity(os.fstat(fd)) == identity,
+            "storage-parent-changed",
+        )
+        return result
+    finally:
+        os.close(fd)
+
+
 def _core_files(policy):
     data = Path(policy["datasets"]["data"]["mountpoint"])
     config = Path(policy["datasets"]["config"]["mountpoint"])
@@ -650,7 +715,7 @@ def _core_files(policy):
         "generated": _file_seal(
             Path("/var/lib/lxc") / str(policy["vmid"]) / "config", limit=65536
         ),
-        "storage": _file_seal(Path("/etc/pve/storage.cfg"), limit=65536),
+        "storage": _storage_seal(Path("/etc/pve/storage.cfg")),
         "root": _file_seal(Path(policy["rootfs"]["path"])),
         "data": _file_seal(data, directory=True),
         "config": _file_seal(config, directory=True),
