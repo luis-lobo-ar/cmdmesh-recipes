@@ -56,6 +56,27 @@ application observations after ownership queries. Fast filesystem seals close
 generated configuration, storage configuration, root identity, dataset
 directories, credential fingerprints, and the database header afterwards.
 
+## Explicit and default storage configuration
+
+Proxmox can provide default local storage without `/etc/pve/storage.cfg`.
+The guard records either a fully fingerprinted file or an observed absent file.
+It never creates storage configuration to make a check pass. The root volume's
+resolved path, image identity and UUID are still checked before and after the
+observation, along with the retained datasets and mounts.
+
+An absence observation holds an open parent directory descriptor and binds its
+device, inode, mode, UID and actual GID. The parent must be canonical, root-owned
+and unwritable by group/others. A read-only non-root group is allowed. Only a
+leaf `ENOENT` means absence; permission errors, missing parents, symlinks and
+nonregular files refuse. Parent replacement or file creation/removal during the
+check also refuses. Unrelated parent timestamp/size changes do not invalidate it.
+When the file exists, its complete metadata and content fingerprint remain bound.
+
+Consumers that pin guard bytes must qualify the new program hash before adopting
+this revision. Preserve previous guard artifacts and failed operation journals;
+do not overwrite their files or retry a consumed operation to apply this change.
+The policy schema and ownership/retirement requirements remain unchanged.
+
 ## Retired start paths
 
 Both retired unit directories must retain `50-cmdmesh-reference.conf` and have

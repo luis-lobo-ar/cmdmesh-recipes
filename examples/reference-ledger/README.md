@@ -51,6 +51,9 @@ denied. It preserves schema2 and adds a narrow one-core quota contract that can
 qualify the generator's initial empty CPU selection. Local tests cover the new
 ownership predicates and preserve the existing storage and application refusals.
 Native attachment and the complete handoff are still unqualified.
+The guard also admits Proxmox's implicit default local storage without creating
+`storage.cfg`, while binding actual parent identity and file presence through
+closing checks. See the [storage seal contract](HANDOFF.md#explicit-and-default-storage-configuration).
 
 ## Run as the application user
 
