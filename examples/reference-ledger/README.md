@@ -38,8 +38,19 @@ the pinned program and adds a disabled serve-existing service. It checks program
 readability as UID/GID1100 and preserves all other account rows and sub-ID
 assignments. Run its check inside a fresh, offline, unprivileged container before
 installation. Host ownership, guarded lifecycle and retained dataset attachment
-remain responsibilities of the calling recipe. This developing helper has local
-tests; native image preparation and full rebuild qualification remain pending.
+remain responsibilities of the calling recipe. The pinned helper passed native
+account-first installation, application-UID readability, and a separate graceful
+shutdown in an owned offline disposable guest. This qualifies image preparation.
+Full retained-data rebuild and independent recovery remain pending.
+
+## Guard the retained-data handoff
+
+The developing [replacement guard](HANDOFF.md) checks an explicit active owner for
+the dataset GUID pair and requires both retired managed start paths to remain
+denied. It preserves schema2 and adds a narrow one-core quota contract that can
+qualify the generator's initial empty CPU selection. Local tests cover the new
+ownership predicates and preserve the existing storage and application refusals.
+Native attachment and the complete handoff are still unqualified.
 
 ## Run as the application user
 
