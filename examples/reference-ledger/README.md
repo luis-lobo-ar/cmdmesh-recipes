@@ -31,6 +31,16 @@ mounts, UID mappings, and retained application identity before a managed start.
 Its normal and debug instance drop-ins are examples pending disposable-host
 qualification. The persistence recipe remains a draft.
 
+## Prepare the replaceable image
+
+The [image blueprint](IMAGE.md) creates the locked application account, installs
+the pinned program and adds a disabled serve-existing service. It checks program
+readability as UID/GID1100 and preserves all other account rows and sub-ID
+assignments. Run its check inside a fresh, offline, unprivileged container before
+installation. Host ownership, guarded lifecycle and retained dataset attachment
+remain responsibilities of the calling recipe. This developing helper has local
+tests; native image preparation and full rebuild qualification remain pending.
+
 ## Run as the application user
 
 Prepare separate existing data, config and runtime directories, owned by the
